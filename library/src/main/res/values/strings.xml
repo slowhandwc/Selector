@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Selector</string>
+    <string name="please_choose_address">请选择地址</string>
+</resources>

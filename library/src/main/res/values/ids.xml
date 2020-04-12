@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="tvTitle" type="id" />
+    <item name="ivClose" type="id" />
+    <item name="tvSelectItem" type="id" />
+    <item name="recyclerView" type="id" />
+    <item name="tbLayout" type="id" />
+</resources>
