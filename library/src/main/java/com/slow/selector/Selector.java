@@ -1,11 +1,11 @@
 package com.slow.selector;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.core.widget.ContentLoadingProgressBar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -13,6 +13,7 @@ import com.google.android.material.tabs.TabLayout;
 import com.slow.selector.adapter.SelectEntitiesAdapter;
 import com.slow.selector.model.SelectEntity;
 import com.slow.selector.view.BottomDialog;
+import com.slow.selector.view.LoadingDialog;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +28,7 @@ import java.util.List;
  * @see
  */
 public class Selector {
+    public static final String TAG = "SELECTOR";
     /**
      * 最深的层级数
      */
@@ -41,12 +43,12 @@ public class Selector {
     private List<SelectEntity> selectedEntities = new ArrayList<>();
     private SelectorEntitiesProviderCallback mSelectorEntitiesProviderCallback;
     private SelectEntity mSelectorEntitiesRootCache;
-    private ContentLoadingProgressBar mLoading;
+    private LoadingDialog mLoading;
 
     private Selector(Builder builder) {
         this.mSelectorEntitiesRootCache = new SelectEntity();
         this.mContext = builder.context;
-        this.mLoading = new ContentLoadingProgressBar(mContext);
+        this.mLoading = new LoadingDialog(mContext);
         this.mBottomDialog = new BottomDialog.Builder(mContext).setContentViewResourceId(R.layout.widget_bottom_selector).create();
         this.mTitle = builder.title;
         this.mNameDivider = builder.nameDivider;
@@ -101,33 +103,13 @@ public class Selector {
                 SelectEntity selectEntity = (SelectEntity) tab.getTag();
                 if(selectEntity!=null){
                     if(selectEntity.isHaveChildren()){
-                        if(mContext.getString(R.string.please_choose).equals(tab.getText())){
-                            for(SelectEntity item:selectEntity.getChildrenEntities()){
-                                item.setChecked(false);
-                            }
-                        } else {
-                            for (SelectEntity item:selectEntity.getChildrenEntities()){
-                                if(selectedEntities.contains(item)){
-                                    item.setChecked(true);
-                                }
-                            }
-                        }
-                        mAdapter.setNewData(selectEntity.getChildrenEntities());
+                        List<SelectEntity> currentSelectList = checkSelectedEntity(selectEntity.getChildrenEntities());
+                        mAdapter.setNewData(currentSelectList);
                     } else {
                         List<SelectEntity> cachedNeededList = mSelectorEntitiesRootCache.getSelectNodeChildren(selectEntity.getLevel(),selectEntity.getId());
                         if(cachedNeededList!=null){
-                            if(mContext.getString(R.string.please_choose).equals(tab.getText())){
-                                for(SelectEntity item:cachedNeededList){
-                                    item.setChecked(false);
-                                }
-                            } else {
-                                for (SelectEntity item:cachedNeededList){
-                                    if(selectedEntities.contains(item)){
-                                        item.setChecked(true);
-                                    }
-                                }
-                            }
-                            mAdapter.setNewData(cachedNeededList);
+                            List<SelectEntity> currentSelectList = checkSelectedEntity(cachedNeededList);
+                            mAdapter.setNewData(currentSelectList);
                         } else {
                             sendProviderDemand(selectEntity.getLevel() + 1, selectEntity);
                         }
@@ -170,6 +152,21 @@ public class Selector {
         });
     }
 
+    private List<SelectEntity> checkSelectedEntity(List<SelectEntity> source){
+        List<SelectEntity> currentSelectEntities = new ArrayList<>();
+        for(SelectEntity selectEntity:source){
+            SelectEntity copy = new SelectEntity(selectEntity.getName(),selectEntity.getId(),selectEntity.getParentId(),selectEntity.getLevel());
+            currentSelectEntities.add(copy);
+        }
+        for(SelectEntity selectEntity:currentSelectEntities){
+            if(selectedEntities.contains(selectEntity)){
+                selectEntity.setChecked(true);
+                break;
+            }
+        }
+        return currentSelectEntities;
+    }
+
     public void show() {
         //加载第一级数据
         mBottomDialog.show();
@@ -204,6 +201,7 @@ public class Selector {
     }
 
     private void sendProviderDemand(int level, SelectEntity parentEntity) {
+        Log.e(TAG,"sendProviderDemand level =="+level);
         mLoading.show();
         mSelectorEntitiesProviderCallback.onEntitiesProvide(level, parentEntity, mSelectorEntitiesProvider);
     }
@@ -211,19 +209,17 @@ public class Selector {
     private ISelectorEntitiesProvider mSelectorEntitiesProvider = new ISelectorEntitiesProvider() {
         @Override
         public void sendEntities(List<SelectEntity> dataList) {
-            mLoading.hide();
+            mLoading.dismiss();
             if (dataList.size() > 0) {
                 if(mSelectorEntitiesRootCache.getId().isEmpty()){
                     mSelectorEntitiesRootCache.setId(dataList.get(0).getParentId());
+                    mSelectorEntitiesRootCache.setNodes(dataList);
                     addNewTab("请选择",mSelectorEntitiesRootCache,true);
+                } else {
+                    mSelectorEntitiesRootCache.setNodes(dataList);
+                    mAdapter.setNewData(checkSelectedEntity(dataList));
                 }
-                mSelectorEntitiesRootCache.setNodes(dataList);
-                for(SelectEntity selectEntity:dataList){
-                    if(selectedEntities.contains(selectEntity)){
-                        selectEntity.setChecked(true);
-                    }
-                }
-                mAdapter.setNewData(dataList);
+//                mAdapter.setNewData(checkSelectedEntity(dataList));
             } else {
                 mSelectorEntitiesProviderCallback.onEntitiesSelected(selectedEntities, getSelectEntitesWholeName());
             }

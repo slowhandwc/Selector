@@ -25,6 +25,17 @@ public class SelectEntity {
      */
     List<SelectEntity> childrenEntities = new ArrayList<>();
 
+    public SelectEntity(){
+
+    }
+
+    public SelectEntity(String name,String id,String parentId,int level){
+        this.name = name;
+        this.id = id;
+        this.parentId = parentId;
+        this.level = level;
+    }
+
     public String getName() {
         return name;
     }
