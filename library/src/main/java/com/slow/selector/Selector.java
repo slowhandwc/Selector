@@ -5,6 +5,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.core.widget.ContentLoadingProgressBar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -40,10 +41,12 @@ public class Selector {
     private List<SelectEntity> selectedEntities = new ArrayList<>();
     private SelectorEntitiesProviderCallback mSelectorEntitiesProviderCallback;
     private SelectEntity mSelectorEntitiesRootCache;
+    private ContentLoadingProgressBar mLoading;
 
     private Selector(Builder builder) {
         this.mSelectorEntitiesRootCache = new SelectEntity();
         this.mContext = builder.context;
+        this.mLoading = new ContentLoadingProgressBar(mContext);
         this.mBottomDialog = new BottomDialog.Builder(mContext).setContentViewResourceId(R.layout.widget_bottom_selector).create();
         this.mTitle = builder.title;
         this.mNameDivider = builder.nameDivider;
@@ -81,11 +84,11 @@ public class Selector {
                         currentTab.setText(selectEntity.getName());
                     }
                     if (mTabLayout.getTabCount() <= selectEntity.getLevel()) {
-                        addNewTab("请选择",selectEntity,true);
+                        addNewTab(mContext.getString(R.string.please_choose),selectEntity,true);
                     } else {
                         removeTabIfMoreThan(selectEntity.getLevel() + 1);
                         TabLayout.Tab nextTab = getTab(mTabLayout.getTabCount() - 1);
-                        nextTab.setText("请选择");
+                        nextTab.setText(mContext.getString(R.string.please_choose));
                         nextTab.setTag(selectEntity);
                         mTabLayout.selectTab(nextTab);
                     }
@@ -98,7 +101,7 @@ public class Selector {
                 SelectEntity selectEntity = (SelectEntity) tab.getTag();
                 if(selectEntity!=null){
                     if(selectEntity.isHaveChildren()){
-                        if("请选择".equals(tab.getText())){
+                        if(mContext.getString(R.string.please_choose).equals(tab.getText())){
                             for(SelectEntity item:selectEntity.getChildrenEntities()){
                                 item.setChecked(false);
                             }
@@ -113,7 +116,7 @@ public class Selector {
                     } else {
                         List<SelectEntity> cachedNeededList = mSelectorEntitiesRootCache.getSelectNodeChildren(selectEntity.getLevel(),selectEntity.getId());
                         if(cachedNeededList!=null){
-                            if("请选择".equals(tab.getText())){
+                            if(mContext.getString(R.string.please_choose).equals(tab.getText())){
                                 for(SelectEntity item:cachedNeededList){
                                     item.setChecked(false);
                                 }
@@ -201,12 +204,14 @@ public class Selector {
     }
 
     private void sendProviderDemand(int level, SelectEntity parentEntity) {
+        mLoading.show();
         mSelectorEntitiesProviderCallback.onEntitiesProvide(level, parentEntity, mSelectorEntitiesProvider);
     }
 
     private ISelectorEntitiesProvider mSelectorEntitiesProvider = new ISelectorEntitiesProvider() {
         @Override
         public void sendEntities(List<SelectEntity> dataList) {
+            mLoading.hide();
             if (dataList.size() > 0) {
                 if(mSelectorEntitiesRootCache.getId().isEmpty()){
                     mSelectorEntitiesRootCache.setId(dataList.get(0).getParentId());
