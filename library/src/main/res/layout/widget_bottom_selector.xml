@@ -31,7 +31,7 @@
         android:layout_height="wrap_content"
         app:tabMode="scrollable"
         app:tabMaxWidth="0dp"
-        app:tabGravity="start"
+        app:tabGravity="fill"
         app:tabIndicatorColor="@android:color/holo_red_light"
         app:tabIndicatorFullWidth="false"
         app:tabIndicatorHeight="2dp"
