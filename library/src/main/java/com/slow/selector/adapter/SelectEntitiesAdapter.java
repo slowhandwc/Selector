@@ -1,5 +1,6 @@
 package com.slow.selector.adapter;
 
+import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,11 +24,17 @@ import java.util.List;
  * @see
  */
 public class SelectEntitiesAdapter extends RecyclerView.Adapter {
+    private int mCustomCheckedColor;
     private List<SelectEntity> mDataList;
     private OnItemClickListener mOnItemClickListener;
 
     public SelectEntitiesAdapter(List<SelectEntity> dataList) {
         mDataList = dataList;
+    }
+
+    public SelectEntitiesAdapter(List<SelectEntity> dataList,int customCheckedColor) {
+        mDataList = dataList;
+        mCustomCheckedColor = customCheckedColor;
     }
 
     public void checkOne(int position){
@@ -49,11 +56,10 @@ public class SelectEntitiesAdapter extends RecyclerView.Adapter {
         selectViewHolder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                checkOne(selectViewHolder.getAdapterPosition());
-//                notifyDataSetChanged();
                 mOnItemClickListener.onClick(v,selectViewHolder.getAdapterPosition(),getItem(selectViewHolder.getAdapterPosition()));
             }
         });
+        selectViewHolder.mTitleView.setCompoundDrawableTintList(ColorStateList.valueOf(mCustomCheckedColor));
         return selectViewHolder;
     }
 
@@ -74,7 +80,7 @@ public class SelectEntitiesAdapter extends RecyclerView.Adapter {
         notifyDataSetChanged();
     }
 
-    static class SelectViewHolder extends RecyclerView.ViewHolder{
+    class SelectViewHolder extends RecyclerView.ViewHolder{
         private TextView mTitleView;
 
         SelectViewHolder(@NonNull View itemView) {

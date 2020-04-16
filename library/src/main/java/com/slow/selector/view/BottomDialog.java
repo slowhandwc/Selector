@@ -3,7 +3,6 @@ package com.slow.selector.view;
 import android.app.Dialog;
 import android.content.Context;
 import android.view.Gravity;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 

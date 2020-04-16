@@ -1,5 +1,6 @@
 package com.slow.selector;
 
+import android.app.Dialog;
 import android.content.Context;
 import android.util.Log;
 import android.view.View;
@@ -43,12 +44,16 @@ public class Selector {
     private List<SelectEntity> selectedEntities = new ArrayList<>();
     private SelectorEntitiesProviderCallback mSelectorEntitiesProviderCallback;
     private SelectEntity mSelectorEntitiesRootCache;
-    private LoadingDialog mLoading;
+    private Dialog mLoading;
 
     private Selector(Builder builder) {
         this.mSelectorEntitiesRootCache = new SelectEntity();
         this.mContext = builder.context;
-        this.mLoading = new LoadingDialog(mContext);
+        if (builder.loadingDialog != null) {
+            this.mLoading = builder.loadingDialog;
+        } else {
+            this.mLoading = new LoadingDialog(mContext);
+        }
         this.mBottomDialog = new BottomDialog.Builder(mContext).setContentViewResourceId(R.layout.widget_bottom_selector).create();
         this.mTitle = builder.title;
         this.mNameDivider = builder.nameDivider;
@@ -57,14 +62,21 @@ public class Selector {
         TextView titleView = mBottomDialog.findViewById(R.id.tvTitle);
         titleView.setText(mTitle);
         this.mTabLayout = mBottomDialog.findViewById(R.id.tbLayout);
+        if (builder.customColor != 0) {
+            this.mTabLayout.setSelectedTabIndicatorColor(builder.customColor);
+        }
         this.mRecyclerView = mBottomDialog.findViewById(R.id.recyclerView);
         this.mRecyclerView.setLayoutManager(new LinearLayoutManager(mContext));
-        this.mAdapter = new SelectEntitiesAdapter(new ArrayList<SelectEntity>());
+        if(builder.customColor!= 0){
+            this.mAdapter = new SelectEntitiesAdapter(new ArrayList<SelectEntity>(),builder.customColor);
+        } else {
+            this.mAdapter = new SelectEntitiesAdapter(new ArrayList<SelectEntity>());
+        }
         this.mRecyclerView.setAdapter(mAdapter);
         this.mAdapter.setOnItemClickListener(new SelectEntitiesAdapter.OnItemClickListener() {
             @Override
             public void onClick(View view, int position, SelectEntity selectEntity) {
-                if(selectedEntities.size()>0){
+                if (selectedEntities.size() > 0) {
                     List<SelectEntity> needDeleteList = new ArrayList<>();
                     for (int i = 0; i < selectedEntities.size(); i++) {
                         SelectEntity item = selectedEntities.get(i);
@@ -82,11 +94,11 @@ public class Selector {
                 } else {
                     //update checked status
                     TabLayout.Tab currentTab = getTab(selectEntity.getLevel() - 1);
-                    if(currentTab!=null){
+                    if (currentTab != null) {
                         currentTab.setText(selectEntity.getName());
                     }
                     if (mTabLayout.getTabCount() <= selectEntity.getLevel()) {
-                        addNewTab(mContext.getString(R.string.please_choose),selectEntity,true);
+                        addNewTab(mContext.getString(R.string.please_choose), selectEntity, true);
                     } else {
                         removeTabIfMoreThan(selectEntity.getLevel() + 1);
                         TabLayout.Tab nextTab = getTab(mTabLayout.getTabCount() - 1);
@@ -101,13 +113,13 @@ public class Selector {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 SelectEntity selectEntity = (SelectEntity) tab.getTag();
-                if(selectEntity!=null){
-                    if(selectEntity.isHaveChildren()){
+                if (selectEntity != null) {
+                    if (selectEntity.isHaveChildren()) {
                         List<SelectEntity> currentSelectList = checkSelectedEntity(selectEntity.getChildrenEntities());
                         mAdapter.setNewData(currentSelectList);
                     } else {
-                        List<SelectEntity> cachedNeededList = mSelectorEntitiesRootCache.getSelectNodeChildren(selectEntity.getLevel(),selectEntity.getId());
-                        if(cachedNeededList!=null){
+                        List<SelectEntity> cachedNeededList = mSelectorEntitiesRootCache.getSelectNodeChildren(selectEntity.getLevel(), selectEntity.getId());
+                        if (cachedNeededList != null) {
                             List<SelectEntity> currentSelectList = checkSelectedEntity(cachedNeededList);
                             mAdapter.setNewData(currentSelectList);
                         } else {
@@ -129,21 +141,21 @@ public class Selector {
 
             }
         });
-        if(builder.defaultSelectEntities!=null&&!builder.defaultSelectEntities.isEmpty()){
+        if (builder.defaultSelectEntities != null && !builder.defaultSelectEntities.isEmpty()) {
             selectedEntities.addAll(builder.defaultSelectEntities);
-            for(int index=0;index<selectedEntities.size();index++){
+            for (int index = 0; index < selectedEntities.size(); index++) {
                 SelectEntity selectEntity = selectedEntities.get(index);
-                if(index == 0){
+                if (index == 0) {
                     mSelectorEntitiesRootCache.setId(selectEntity.getParentId());
-                    addNewTab(selectEntity.getName(),mSelectorEntitiesRootCache,false);
+                    addNewTab(selectEntity.getName(), mSelectorEntitiesRootCache, false);
                 } else {
-                    addNewTab(selectEntity.getName(),selectedEntities.get(index -1),false);
+                    addNewTab(selectEntity.getName(), selectedEntities.get(index - 1), false);
                 }
             }
-            mTabLayout.selectTab(getTab(mTabLayout.getTabCount()-1));
+            mTabLayout.selectTab(getTab(mTabLayout.getTabCount() - 1));
         }
         ImageView close = mBottomDialog.findViewById(R.id.ivClose);
-        close.setOnClickListener(new View.OnClickListener(){
+        close.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -152,14 +164,14 @@ public class Selector {
         });
     }
 
-    private List<SelectEntity> checkSelectedEntity(List<SelectEntity> source){
+    private List<SelectEntity> checkSelectedEntity(List<SelectEntity> source) {
         List<SelectEntity> currentSelectEntities = new ArrayList<>();
-        for(SelectEntity selectEntity:source){
-            SelectEntity copy = new SelectEntity(selectEntity.getName(),selectEntity.getId(),selectEntity.getParentId(),selectEntity.getLevel());
+        for (SelectEntity selectEntity : source) {
+            SelectEntity copy = new SelectEntity(selectEntity.getName(), selectEntity.getId(), selectEntity.getParentId(), selectEntity.getLevel());
             currentSelectEntities.add(copy);
         }
-        for(SelectEntity selectEntity:currentSelectEntities){
-            if(selectedEntities.contains(selectEntity)){
+        for (SelectEntity selectEntity : currentSelectEntities) {
+            if (selectedEntities.contains(selectEntity)) {
                 selectEntity.setChecked(true);
                 break;
             }
@@ -170,7 +182,7 @@ public class Selector {
     public void show() {
         //加载第一级数据
         mBottomDialog.show();
-        if(selectedEntities.isEmpty()){
+        if (selectedEntities.isEmpty()) {
             sendProviderDemand(1, null);
         }
     }
@@ -181,16 +193,16 @@ public class Selector {
         mBottomDialog.dismiss();
     }
 
-    private TabLayout.Tab getTab(int index){
+    private TabLayout.Tab getTab(int index) {
         TabLayout.Tab tab = mTabLayout.getTabAt(index);
         return tab;
     }
 
-    private void addNewTab(String tabName,SelectEntity parent,boolean isSelected) {
+    private void addNewTab(String tabName, SelectEntity parent, boolean isSelected) {
         TabLayout.Tab tab = mTabLayout.newTab();
         tab.setText(tabName);
         tab.setTag(parent);
-        mTabLayout.addTab(tab,isSelected);
+        mTabLayout.addTab(tab, isSelected);
     }
 
     private void removeTabIfMoreThan(int moreThan) {
@@ -201,7 +213,7 @@ public class Selector {
     }
 
     private void sendProviderDemand(int level, SelectEntity parentEntity) {
-        Log.e(TAG,"sendProviderDemand level =="+level);
+        Log.e(TAG, "sendProviderDemand level ==" + level);
         mLoading.show();
         mSelectorEntitiesProviderCallback.onEntitiesProvide(level, parentEntity, mSelectorEntitiesProvider);
     }
@@ -211,15 +223,14 @@ public class Selector {
         public void sendEntities(List<SelectEntity> dataList) {
             mLoading.dismiss();
             if (dataList.size() > 0) {
-                if(mSelectorEntitiesRootCache.getId().isEmpty()){
+                if (mSelectorEntitiesRootCache.getId().isEmpty()) {
                     mSelectorEntitiesRootCache.setId(dataList.get(0).getParentId());
                     mSelectorEntitiesRootCache.setNodes(dataList);
-                    addNewTab("请选择",mSelectorEntitiesRootCache,true);
+                    addNewTab(mContext.getString(R.string.please_choose), mSelectorEntitiesRootCache, true);
                 } else {
                     mSelectorEntitiesRootCache.setNodes(dataList);
                     mAdapter.setNewData(checkSelectedEntity(dataList));
                 }
-//                mAdapter.setNewData(checkSelectedEntity(dataList));
             } else {
                 mSelectorEntitiesProviderCallback.onEntitiesSelected(selectedEntities, getSelectEntitesWholeName());
             }
@@ -243,15 +254,17 @@ public class Selector {
          * 提供选择数据
          * 组件调用此方法，将ISelectorEntitiesProvider 回调传给业务界面
          * 业务界面在获取数据之后，通过ISelectorEntitiesProvider 的 sendEntities 方法将数据发送回来
-         * @param level 层级
-         * @param parentSelectEntity 父级 SelectEntity
+         *
+         * @param level                    层级
+         * @param parentSelectEntity       父级 SelectEntity
          * @param selectorEntitiesProvider 选择数据提供者接口
          */
         void onEntitiesProvide(int level, SelectEntity parentSelectEntity, ISelectorEntitiesProvider selectorEntitiesProvider);
 
         /**
          * 选择完成
-         * @param selectEntityList 已选择的数据
+         *
+         * @param selectEntityList        已选择的数据
          * @param selectEntitiesWholeName 已选择的数据名称的格式化字符串
          */
         void onEntitiesSelected(List<SelectEntity> selectEntityList, String selectEntitiesWholeName);
@@ -263,9 +276,11 @@ public class Selector {
 
     public static class Builder {
         private Context context;
+        private Dialog loadingDialog;
         private int maxLevel;
         private String title;
         private String nameDivider;
+        private int customColor;
         private List<SelectEntity> defaultSelectEntities;
         private SelectorEntitiesProviderCallback selectorEntitiesProviderCallback;
 
@@ -273,6 +288,11 @@ public class Selector {
             this.context = context;
             this.nameDivider = "-";
             this.maxLevel = 4;
+        }
+
+        public Builder setLoadingDialog(Dialog loadingDialog) {
+            this.loadingDialog = loadingDialog;
+            return this;
         }
 
         public Builder setMaxLevel(int maxLevel) {
@@ -295,7 +315,13 @@ public class Selector {
             return this;
         }
 
-        public Builder setDefaultEntities(List<SelectEntity> selectEntities){
+        public Builder setCustomColor(int customColor) {
+            this.customColor = customColor;
+            return this;
+        }
+
+
+        public Builder setDefaultEntities(List<SelectEntity> selectEntities) {
             this.defaultSelectEntities = selectEntities;
             return this;
         }

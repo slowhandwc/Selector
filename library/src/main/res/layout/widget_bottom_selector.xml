@@ -34,7 +34,7 @@
         app:tabGravity="start"
         app:tabIndicatorColor="@android:color/holo_red_light"
         app:tabIndicatorFullWidth="false"
-        app:tabIndicatorHeight="4dp"
+        app:tabIndicatorHeight="2dp"
         app:tabSelectedTextColor="@android:color/black"
         app:tabTextAppearance="@style/TabLayoutTextSizeStyle"
         app:tabTextColor="@android:color/black"/>
