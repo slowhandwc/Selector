@@ -25,11 +25,15 @@ public class SelectEntity {
      */
     List<SelectEntity> childrenEntities = new ArrayList<>();
 
-    public SelectEntity(){
+    public SelectEntity() {
 
     }
 
-    public SelectEntity(String name,String id,String parentId,int level){
+    public SelectEntity(String id) {
+        this.id = id;
+    }
+
+    public SelectEntity(String name, String id, String parentId, int level) {
         this.name = name;
         this.id = id;
         this.parentId = parentId;
@@ -94,9 +98,9 @@ public class SelectEntity {
 
     @Override
     public boolean equals(@Nullable Object obj) {
-        if(obj instanceof SelectEntity){
+        if (obj instanceof SelectEntity) {
             SelectEntity other = (SelectEntity) obj;
-            if(id.equals(other.getId())){
+            if (id.equals(other.getId())) {
                 return true;
             }
         }
@@ -110,19 +114,28 @@ public class SelectEntity {
 
     /**
      * 设置节点
+     *
      * @param outNodes 外部节点数据
      * @return 是否设置成功
      */
-    public boolean setNodes(List<SelectEntity> outNodes){
-        if(outNodes.size()>0){
+    public boolean setNodes(List<SelectEntity> outNodes) {
+        if (outNodes.size() > 0) {
             String outNodesParentId = outNodes.get(0).getParentId();
-            if(id.equals(outNodesParentId)){
-                setChildrenEntities(outNodes);
+            if (id.equals(outNodesParentId)) {
+                if (getChildrenEntities().isEmpty()) {
+                    getChildrenEntities().addAll(outNodes);
+                } else {
+                    for (SelectEntity outSelectEntity : outNodes) {
+                        if (!getChildrenEntities().contains(outSelectEntity)) {
+                            getChildrenEntities().add(outSelectEntity);
+                        }
+                    }
+                }
                 return true;
             } else {
-                if(getChildrenEntities().size()>0){
-                    for(SelectEntity child:getChildrenEntities()){
-                        if(child.setNodes(outNodes)){
+                if (getChildrenEntities().size() > 0) {
+                    for (SelectEntity child : getChildrenEntities()) {
+                        if (child.setNodes(outNodes)) {
                             return true;
                         }
                     }
@@ -135,14 +148,15 @@ public class SelectEntity {
 
     /**
      * 获取选择的节点子数据
-     * @param level 层级
-     * @param id 节点id
+     *
+     * @param parentLevel 父节点层级
+     * @param parentId    父节点id
      * @return
      */
-    public List<SelectEntity> getSelectNodeChildren(int level,String id){
-        if(this.level == level){
-            if(this.id.equals(id)){
-                if(getChildrenEntities().size()>0){
+    public List<SelectEntity> getSelectNodeChildren(int parentLevel, String parentId) {
+        if (this.level == parentLevel) {
+            if (this.id.equals(parentId)) {
+                if (getChildrenEntities().size() > 0) {
                     return getChildrenEntities();
                 }
                 return null;
@@ -150,10 +164,10 @@ public class SelectEntity {
                 return null;
             }
         } else {
-            if(getChildrenEntities().size()>0){
-                for(SelectEntity child:getChildrenEntities()){
-                    List<SelectEntity> childNodes = child.getSelectNodeChildren(level,id);
-                    if(childNodes!=null){
+            if (getChildrenEntities().size() > 0) {
+                for (SelectEntity child : getChildrenEntities()) {
+                    List<SelectEntity> childNodes = child.getSelectNodeChildren(parentLevel, parentId);
+                    if (childNodes != null) {
                         return childNodes;
                     }
                 }
@@ -166,23 +180,25 @@ public class SelectEntity {
 
     /**
      * 是否含有子节点
+     *
      * @return
      */
-    public boolean isHaveChildren(){
-        return getChildrenEntities().size()>0;
+    public boolean isHaveChildren() {
+        return getChildrenEntities().size() > 0;
     }
 
     /**
      * 选择子项
+     *
      * @param selectEntity 子项
      */
-    public boolean chooseChild(SelectEntity selectEntity){
-        if(isHaveChildren()){
+    public boolean chooseChild(SelectEntity selectEntity) {
+        if (isHaveChildren()) {
             int level = getChildrenEntities().get(0).getLevel();
-            if(level == selectEntity.getLevel()){
+            if (level == selectEntity.getLevel()) {
                 int indexInChildrenEntities = getChildrenEntities().indexOf(selectEntity);
-                if(indexInChildrenEntities>=0){
-                    for(SelectEntity item:getChildrenEntities()){
+                if (indexInChildrenEntities >= 0) {
+                    for (SelectEntity item : getChildrenEntities()) {
                         item.setChecked(false);
                     }
                     getChildrenEntities().get(indexInChildrenEntities).setChecked(true);
@@ -191,8 +207,8 @@ public class SelectEntity {
                     return false;
                 }
             } else {
-                for(SelectEntity item:getChildrenEntities()){
-                    if(item.chooseChild(selectEntity)){
+                for (SelectEntity item : getChildrenEntities()) {
+                    if (item.chooseChild(selectEntity)) {
                         return true;
                     }
                 }

@@ -28,6 +28,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
  * @see
  */
 public class MainActivity extends AppCompatActivity {
+    private List<SelectEntity> mChildrenOfRoot = new ArrayList<>();
     private List<SelectEntity> mSelectEntities = new ArrayList<>();
     Retrofit retrofit;
 
@@ -42,14 +43,20 @@ public class MainActivity extends AppCompatActivity {
         getAddress.setOnClickListener(v ->
                 new Selector.Builder(MainActivity.this)
                         .setTitle("请选择地址")
+                        .setCustomColor(getColor(R.color.colorPrimary))
                         .setMaxLevel(3)
                         .setDefaultEntities(mSelectEntities)
+                        .setChildrenOfRoot(mChildrenOfRoot)
                         .setOnSelectorEntitiesProviderCallback(new Selector.SelectorEntitiesProviderCallback() {
                             @Override
                             public void onEntitiesProvide(final int level, SelectEntity parentSelectEntity, final Selector.ISelectorEntitiesProvider selectorEntitiesProvider) {
                                 switch (level) {
                                     case 1:
-                                        getAddress("province", null, addressList -> selectorEntitiesProvider.sendEntities(transformSeletEntitesFromAddress(level, addressList)));
+                                        getAddress("province", null, addressList -> {
+                                            List<SelectEntity> selectEntities = transformSeletEntitesFromAddress(level, addressList);
+                                            mChildrenOfRoot.addAll(selectEntities);
+                                            selectorEntitiesProvider.sendEntities(selectEntities);
+                                        });
                                         break;
                                     case 2:
                                         getAddress("city", parentSelectEntity.getId(), addressList -> selectorEntitiesProvider.sendEntities(transformSeletEntitesFromAddress(level, addressList)));

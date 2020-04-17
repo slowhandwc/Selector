@@ -47,7 +47,10 @@ public class Selector {
     private Dialog mLoading;
 
     private Selector(Builder builder) {
-        this.mSelectorEntitiesRootCache = new SelectEntity();
+        this.mSelectorEntitiesRootCache = new SelectEntity("0");
+        if(builder.childrenOfRoot != null){
+            mSelectorEntitiesRootCache.setChildrenEntities(builder.childrenOfRoot);
+        }
         this.mContext = builder.context;
         if (builder.loadingDialog != null) {
             this.mLoading = builder.loadingDialog;
@@ -67,8 +70,8 @@ public class Selector {
         }
         this.mRecyclerView = mBottomDialog.findViewById(R.id.recyclerView);
         this.mRecyclerView.setLayoutManager(new LinearLayoutManager(mContext));
-        if(builder.customColor!= 0){
-            this.mAdapter = new SelectEntitiesAdapter(new ArrayList<SelectEntity>(),builder.customColor);
+        if (builder.customColor != 0) {
+            this.mAdapter = new SelectEntitiesAdapter(new ArrayList<SelectEntity>(), builder.customColor);
         } else {
             this.mAdapter = new SelectEntitiesAdapter(new ArrayList<SelectEntity>());
         }
@@ -92,7 +95,6 @@ public class Selector {
                 if (selectEntity.getLevel() >= mMaxLevel) {
                     dissmiss();
                 } else {
-                    //update checked status
                     TabLayout.Tab currentTab = getTab(selectEntity.getLevel() - 1);
                     if (currentTab != null) {
                         currentTab.setText(selectEntity.getName());
@@ -123,7 +125,18 @@ public class Selector {
                             List<SelectEntity> currentSelectList = checkSelectedEntity(cachedNeededList);
                             mAdapter.setNewData(currentSelectList);
                         } else {
-                            sendProviderDemand(selectEntity.getLevel() + 1, selectEntity);
+                            if (!selectedEntities.isEmpty()) {
+                                List<SelectEntity> currentSelectList;
+                                List<SelectEntity> selectedCacheList = selectedEntities.get(0).getSelectNodeChildren(selectEntity.getLevel(), selectEntity.getId());
+                                if (selectedCacheList != null) {
+                                    currentSelectList = checkSelectedEntity(selectedCacheList);
+                                    mAdapter.setNewData(currentSelectList);
+                                } else {
+                                    sendProviderDemand(selectEntity.getLevel() + 1, selectEntity);
+                                }
+                            } else {
+                                sendProviderDemand(selectEntity.getLevel() + 1, selectEntity);
+                            }
                         }
                     }
                 } else {
@@ -152,7 +165,11 @@ public class Selector {
                     addNewTab(selectEntity.getName(), selectedEntities.get(index - 1), false);
                 }
             }
-            mTabLayout.selectTab(getTab(mTabLayout.getTabCount() - 1));
+            if (mTabLayout.getTabCount() < mMaxLevel) {
+                addNewTab(mContext.getString(R.string.please_choose), selectedEntities.get(selectedEntities.size() - 1), true);
+            } else {
+                mTabLayout.selectTab(getTab(mTabLayout.getTabCount() - 1));
+            }
         }
         ImageView close = mBottomDialog.findViewById(R.id.ivClose);
         close.setOnClickListener(new View.OnClickListener() {
@@ -223,12 +240,13 @@ public class Selector {
         public void sendEntities(List<SelectEntity> dataList) {
             mLoading.dismiss();
             if (dataList.size() > 0) {
-                if (mSelectorEntitiesRootCache.getId().isEmpty()) {
-                    mSelectorEntitiesRootCache.setId(dataList.get(0).getParentId());
-                    mSelectorEntitiesRootCache.setNodes(dataList);
+                mSelectorEntitiesRootCache.setNodes(dataList);
+                if (!selectedEntities.isEmpty()) {
+                    selectedEntities.get(0).setNodes(dataList);
+                }
+                if (mTabLayout.getTabCount() == 0) {
                     addNewTab(mContext.getString(R.string.please_choose), mSelectorEntitiesRootCache, true);
                 } else {
-                    mSelectorEntitiesRootCache.setNodes(dataList);
                     mAdapter.setNewData(checkSelectedEntity(dataList));
                 }
             } else {
@@ -282,6 +300,7 @@ public class Selector {
         private String nameDivider;
         private int customColor;
         private List<SelectEntity> defaultSelectEntities;
+        private List<SelectEntity> childrenOfRoot;
         private SelectorEntitiesProviderCallback selectorEntitiesProviderCallback;
 
         public Builder(Context context) {
@@ -320,9 +339,13 @@ public class Selector {
             return this;
         }
 
-
         public Builder setDefaultEntities(List<SelectEntity> selectEntities) {
             this.defaultSelectEntities = selectEntities;
+            return this;
+        }
+
+        public Builder setChildrenOfRoot(List<SelectEntity> rootNodes) {
+            this.childrenOfRoot = rootNodes;
             return this;
         }
 
