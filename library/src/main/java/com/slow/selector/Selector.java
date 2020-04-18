@@ -4,7 +4,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.util.Log;
 import android.view.View;
-import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -38,6 +38,7 @@ public class Selector {
     private String mTitle;
     private String mNameDivider;
     private BottomDialog mBottomDialog;
+    private LinearLayout mCloseLinearLayout;
     private final TabLayout mTabLayout;
     private RecyclerView mRecyclerView;
     private SelectEntitiesAdapter mAdapter;
@@ -64,6 +65,19 @@ public class Selector {
         this.mSelectorEntitiesProviderCallback = builder.selectorEntitiesProviderCallback;
         TextView titleView = mBottomDialog.findViewById(R.id.tvTitle);
         titleView.setText(mTitle);
+        mCloseLinearLayout = mBottomDialog.findViewById(R.id.llClose);
+        if(builder.closeBtn!=null){
+            mCloseLinearLayout.addView(builder.closeBtn);
+        } else {
+            mCloseLinearLayout.findViewById(R.id.ivClose).setVisibility(View.VISIBLE);
+        }
+        mCloseLinearLayout.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                dissmiss();
+            }
+        });
         this.mTabLayout = mBottomDialog.findViewById(R.id.tbLayout);
         if (builder.customColor != 0) {
             this.mTabLayout.setSelectedTabIndicatorColor(builder.customColor);
@@ -171,14 +185,7 @@ public class Selector {
                 mTabLayout.selectTab(getTab(mTabLayout.getTabCount() - 1));
             }
         }
-        ImageView close = mBottomDialog.findViewById(R.id.ivClose);
-        close.setOnClickListener(new View.OnClickListener() {
 
-            @Override
-            public void onClick(View v) {
-                dissmiss();
-            }
-        });
     }
 
     private List<SelectEntity> checkSelectedEntity(List<SelectEntity> source) {
@@ -207,6 +214,7 @@ public class Selector {
     public void dissmiss() {
         mSelectorEntitiesProviderCallback.onEntitiesSelected(selectedEntities, getSelectEntitesWholeName());
         mSelectorEntitiesProviderCallback = null;
+        mCloseLinearLayout.removeAllViews();
         mBottomDialog.dismiss();
     }
 
@@ -299,10 +307,10 @@ public class Selector {
         private String title;
         private String nameDivider;
         private int customColor;
+        private View closeBtn;
         private List<SelectEntity> defaultSelectEntities;
         private List<SelectEntity> childrenOfRoot;
         private SelectorEntitiesProviderCallback selectorEntitiesProviderCallback;
-
         public Builder(Context context) {
             this.context = context;
             this.nameDivider = "-";
@@ -336,6 +344,11 @@ public class Selector {
 
         public Builder setCustomColor(int customColor) {
             this.customColor = customColor;
+            return this;
+        }
+
+        public Builder setCloseBtn(View closeBtn) {
+            this.closeBtn = closeBtn;
             return this;
         }
 

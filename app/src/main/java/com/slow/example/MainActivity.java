@@ -1,8 +1,10 @@
 package com.slow.example;
 
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -40,11 +42,13 @@ public class MainActivity extends AppCompatActivity {
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         final Button getAddress = findViewById(R.id.btnGetAddress);
+        final ImageView imageView = (ImageView) LayoutInflater.from(this).inflate(R.layout.widget_btn_close,null);
         getAddress.setOnClickListener(v ->
                 new Selector.Builder(MainActivity.this)
                         .setTitle("请选择地址")
                         .setCustomColor(getColor(R.color.colorPrimary))
                         .setMaxLevel(3)
+                        .setCloseBtn(imageView)
                         .setDefaultEntities(mSelectEntities)
                         .setChildrenOfRoot(mChildrenOfRoot)
                         .setOnSelectorEntitiesProviderCallback(new Selector.SelectorEntitiesProviderCallback() {

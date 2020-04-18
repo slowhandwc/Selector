@@ -5,4 +5,5 @@
     <item name="tvSelectItem" type="id" />
     <item name="recyclerView" type="id" />
     <item name="tbLayout" type="id" />
+    <item name="llClose" type="id" />
 </resources>

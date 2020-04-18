@@ -16,14 +16,20 @@
             android:textSize="20sp"
             android:textColor="@android:color/black"
             android:text="@string/please_choose_address"/>
-        <ImageView
-            android:id="@id/ivClose"
+        <LinearLayout
+            android:id="@id/llClose"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@mipmap/ic_close"
-            android:tint="#CBCBCB"
-            android:layout_alignParentEnd="true"
-            android:padding="20dp"/>
+            android:padding="20dp"
+            android:layout_alignParentEnd="true">
+            <ImageView
+                android:id="@id/ivClose"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:src="@mipmap/ic_close"
+                android:tint="#CBCBCB" />
+        </LinearLayout>
     </RelativeLayout>
     <com.google.android.material.tabs.TabLayout
         android:id="@id/tbLayout"
